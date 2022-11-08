@@ -37,7 +37,7 @@ async function run() {
     console.log(id)
    const query = {_id : ObjectId(id)}
     const result = await database.findOne(query)
-    console.log(result)
+    res.send(result)
   })
 }
   catch{
