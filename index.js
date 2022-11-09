@@ -32,6 +32,18 @@ async function run() {
       res.send(services) 
 
   }) 
+  // get reviews
+  app.get('/allreviews/:id' , async (req,res) => {
+    const id = req.params.id
+ 
+    const query = {id : {$eq : id}}
+    
+    
+    const cursor = serviceReview.find(query)
+    const result = await cursor.toArray()
+    res.send(result)
+    
+  })
  
   app.get('/service/:id' , async(req , res ) => {
     const id = req.params.id;
