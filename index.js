@@ -32,7 +32,17 @@ async function run() {
       res.send(services) 
 
   }) 
-  // get reviews
+
+  // my reviews 
+   app.get('/myreviews/:email' , async (req , res) => {
+    const email = req.params.email
+    const query = {email : {$eq : email}}
+    const cursor = serviceReview.find(query)
+    const result = await cursor.toArray()
+    res.send(result)
+   })
+
+  // get all reviews
   app.get('/allreviews/:id' , async (req,res) => {
     const id = req.params.id
  
