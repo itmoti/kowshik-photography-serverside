@@ -11,18 +11,18 @@ app.use(cors())
 app.use(express.json())
 
 // verify jwt token 
-function verifyJWT(req,res,next) {
+function verifyJWT(req, res, next) {
   const authHeader = req.headers.authorizaton
   if (!authHeader) {
-    return res.status(401).send({message : 'Unauthorized access in first'})
+    return res.status(401).send({ message: 'Unauthorized access in first' })
   }
   const token = authHeader.split(' ')[1]
-  jwt.verify(token , process.env.SECRET_KEY , function(err , decoded) {
-    if(err) {
-      return res.status(403).send({message : 'Forbidden Access'})
+  jwt.verify(token, process.env.SECRET_KEY, function (err, decoded) {
+    if (err) {
+      return res.status(403).send({ message: 'Forbidden Access' })
     }
     req.decoded = decoded
-  
+
   })
   next()
 }
@@ -55,22 +55,24 @@ async function run() {
     // add service 
     app.post('/services', async (req, res) => {
       const info = req.body
-      const doc = {  name: info.name,
+      const doc = {
+        name: info.name,
         price: parseFloat(info.price),
         img: info.imgurl,
-        description: info.description }
+        description: info.description
+      }
       const result = await database.insertOne(doc)
       res.send(result)
     })
     // my reviews 
-    app.get('/myreviews/:id',verifyJWT , async (req, res) => {
+    app.get('/myreviews/:id', verifyJWT, async (req, res) => {
 
-     const decoded = req.decoded.email
+      const decoded = req.decoded.email
       const email = req.params.id
-      if(decoded !== email) {
-        return res.status(403).send({message : 'unauthorized access'})
+      if (decoded !== email) {
+        return res.status(403).send({ message: 'unauthorized access' })
       }
-   
+
       const query = { email: { $eq: email } }
       const cursor = serviceReview.find(query)
       const result = await cursor.toArray()
@@ -102,33 +104,44 @@ async function run() {
     app.post('/service/:id', async (req, res) => {
       const id = req.params.id
       const info = req.body
-    
+
 
       const result = await serviceReview.insertOne(info)
 
       res.send(result)
     })
 
-  // delete reviews
+    // delete reviews
     app.delete("/reviews/:id", async (req, res) => {
       const id = req.params.id;
-    const query = {_id : ObjectId(id)}
+      const query = { _id: ObjectId(id) }
 
 
-    const result =await serviceReview.deleteOne(query)
+      const result = await serviceReview.deleteOne(query)
       res.send(result)
-    
-      
+
+
     });
 
     // edit reviews 
-    app.patch("/reviews/:id" , async (req , res) => {
+    app.patch("/reviews/:id", async (req, res) => {
       const id = req.params.id;
-      
+      const newReview = req.body.review
+
+      const filter = {_id : ObjectId(id)}
+      const updatedDoc = {
+        $set: {
+          review : newReview
+        }
+      }
+      const result = await serviceReview.updateOne(filter , updatedDoc)
+      console.log(result)
+      res.send({ message: 'fetched' })
     })
-   
 
    
+
+
   }
   catch {
     console.error(err)
