@@ -33,7 +33,9 @@ const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology:
 
 async function run() {
   try {
+    // services database 
     const database = client.db('kowshikPhotography').collection('services')
+    // reviews database
     const serviceReview = client.db('kowshikPhotography').collection('review')
     app.get('/services', async (req, res) => {
       const query = {}
@@ -62,11 +64,9 @@ async function run() {
     })
     // my reviews 
     app.get('/myreviews/:id',verifyJWT , async (req, res) => {
-     console.log(req.decoded)
+
      const decoded = req.decoded.email
       const email = req.params.id
-      console.log('decoded',decoded)
-      console.log('req email' ,email)
       if(decoded !== email) {
         return res.status(403).send({message : 'unauthorized access'})
       }
@@ -102,12 +102,31 @@ async function run() {
     app.post('/service/:id', async (req, res) => {
       const id = req.params.id
       const info = req.body
-      console.log(info)
+    
 
       const result = await serviceReview.insertOne(info)
 
       res.send(result)
     })
+
+  // delete reviews
+    app.delete("/reviews/:id", async (req, res) => {
+      const id = req.params.id;
+    const query = {_id : ObjectId(id)}
+
+
+    const result =await serviceReview.deleteOne(query)
+      res.send(result)
+    
+      
+    });
+
+    // edit reviews 
+    app.patch("/reviews/:id" , async (req , res) => {
+      const id = req.params.id;
+      
+    })
+   
 
    
   }
