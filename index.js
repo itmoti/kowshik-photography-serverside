@@ -3,12 +3,30 @@ const app = express()
 const cors = require('cors');
 const port = process.env.PORT || 5000
 const jwt = require('jsonwebtoken')
-const { MongoClient, ServerApiVersion, UnorderedBulkOperation, ObjectId } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 require('dotenv').config()
 
 // middlewire 
 app.use(cors())
 app.use(express.json())
+
+// verify jwt token 
+function verifyJWT(req,res,next) {
+  const authHeader = req.headers.authorizaton
+  if (!authHeader) {
+    return res.status(401).send({message : 'Unauthorized access in first'})
+  }
+  const token = authHeader.split(' ')[1]
+  jwt.verify(token , process.env.SECRET_KEY , function(err , decoded) {
+    if(err) {
+      return res.status(403).send({message : 'Forbidden Access'})
+    }
+    req.decoded = decoded
+  
+  })
+  next()
+}
+
 
 const uri = `mongodb+srv://${process.env.DATABASE_USERNAME}:${process.env.DATABASE_PASSWORD}@cluster0.rat3bcl.mongodb.net/?retryWrites=true&w=majority`;
 const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true, serverApi: ServerApiVersion.v1 });
@@ -43,8 +61,16 @@ async function run() {
       res.send(result)
     })
     // my reviews 
-    app.get('/myreviews/:email', async (req, res) => {
-      const email = req.params.email
+    app.get('/myreviews/:id',verifyJWT , async (req, res) => {
+     console.log(req.decoded)
+     const decoded = req.decoded.email
+      const email = req.params.id
+      console.log('decoded',decoded)
+      console.log('req email' ,email)
+      if(decoded !== email) {
+        return res.status(403).send({message : 'unauthorized access'})
+      }
+   
       const query = { email: { $eq: email } }
       const cursor = serviceReview.find(query)
       const result = await cursor.toArray()
@@ -83,13 +109,7 @@ async function run() {
       res.send(result)
     })
 
-    app.post('/jwt', (req, res) => {
-      const user = req.body;
-
-      var token = jwt.sign(user, process.env.SECRET_KEY)
-      res.send({ token })
-      console.log({ token })
-    })
+   
   }
   catch {
     console.error(err)
